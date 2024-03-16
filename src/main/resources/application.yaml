@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: SpringSecurityPractice
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    
+    show-sql: true  
+
+  datasource:
+    url: mysql:jdbc://localhost:3306/spring_practice
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
