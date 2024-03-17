@@ -3,6 +3,7 @@ package springSecurityPractice.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import springSecurityPractice.dtos.UserRequestDTO;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
@@ -14,6 +15,9 @@ public class UserServiceImpl implements IUserService {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private PasswordEncoder encoder;
 	
 	@Override
 	public Optional<User> saveUser(UserRequestDTO userRequestDTO) throws UserAlreadyExistException {
@@ -40,7 +44,13 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	public Optional<User> getUser(String email) throws UserNotFoundException {
 		
-		return Optional.empty();
+		Optional<User> user = userRepository.findByEmail(email);
+		
+		if(user.isEmpty()) {
+			throw new UserNotFoundException("user" + email + "does not exists");
+		}
+		
+		return user;
 	}
 
 }
