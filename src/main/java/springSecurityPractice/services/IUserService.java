@@ -3,6 +3,8 @@ package springSecurityPractice.services;
 import java.util.Optional;
 
 import springSecurityPractice.dtos.UserRequestDTO;
+import springSecurityPractice.exceptions.UserAlreadyExistException;
+import springSecurityPractice.exceptions.UserNotFoundException;
 import springSecurityPractice.models.User;
 
 public interface IUserService {
