@@ -3,14 +3,19 @@ package springSecurityPractice.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import springSecurityPractice.dtos.UserRequestDTO;
+import springSecurityPractice.dtos.UserResponseDTO;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
 import springSecurityPractice.exceptions.UserNotFoundException;
 import springSecurityPractice.models.User;
 import springSecurityPractice.repositories.UserRepository;
 
+@Service
+@Primary
 public class UserServiceImpl implements IUserService {
 
 	@Autowired
@@ -20,7 +25,7 @@ public class UserServiceImpl implements IUserService {
 	private PasswordEncoder encoder;
 	
 	@Override
-	public Optional<User> saveUser(UserRequestDTO userRequestDTO) throws UserAlreadyExistException {
+	public Optional<UserResponseDTO> saveUser(UserRequestDTO userRequestDTO) throws UserAlreadyExistException {
 		
 		Optional<User> user = userRepository.findByEmail(userRequestDTO.getEmail());
 		
@@ -38,19 +43,26 @@ public class UserServiceImpl implements IUserService {
 		newUser = userRepository.save(newUser);
 		System.out.println(newUser);
 		
-		return Optional.of(newUser);
+		UserResponseDTO userResponseDTO = new UserResponseDTO(); 
+		
+		return Optional.of(userResponseDTO);
 	}
 
 	@Override
-	public Optional<User> getUser(String email) throws UserNotFoundException {
+	public Optional<UserResponseDTO> getUser(String email) throws UserNotFoundException {
 		
 		Optional<User> user = userRepository.findByEmail(email);
 		
 		if(user.isEmpty()) {
 			throw new UserNotFoundException("user" + email + "does not exists");
 		}
+		UserResponseDTO userResponseDTO = new UserResponseDTO();
 		
-		return user;
+		userResponseDTO.setFirstName(user.get().getFirstName());
+		userResponseDTO.setLastName(user.get().getLastName());
+		userResponseDTO.setEmail(user.get().getEmail());
+		
+		return Optional.of(userResponseDTO);
 	}
 
 }
