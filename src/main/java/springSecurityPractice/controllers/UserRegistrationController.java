@@ -26,6 +26,11 @@ public class UserRegistrationController {
 	
 	@PostMapping("/register")
 	public ResponseEntity<Object> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error) {
+		
+		if(error.hasErrors()) {
+			return new ResponseEntity<>(error.getFieldErrors(), HttpStatus.BAD_REQUEST);
+		}
+		
 		Optional<UserResponseDTO> userResponseDTO;
 		try {
 			userResponseDTO = userService.saveUser(userRequestDTO);
