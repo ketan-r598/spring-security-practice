@@ -39,7 +39,7 @@ public class UserServiceImpl implements IUserService {
 
 	@Override
 	public Optional<User> getUser(String email) throws UserNotFoundException {
-		// TODO Auto-generated method stub
+		
 		return Optional.empty();
 	}
 
