@@ -1,13 +1,6 @@
 package springSecurityPractice.models;
 
-import java.sql.Date;
-
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,8 +14,7 @@ import springSecurityPractice.customValidators.ValidEmail;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "users")
-@EntityListeners(AuditingEntityListener.class)
-public class User {
+public class User extends BaseModel{
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,10 +31,4 @@ public class User {
 	
 	@ValidEmail
 	private String email;
-	
-	@CreatedDate
-	private Date createdAt;
-	
-	@LastModifiedDate
-	private Date updatedAt;
 }
