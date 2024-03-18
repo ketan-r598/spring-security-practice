@@ -28,6 +28,7 @@ public class UserRegistrationController {
 	public ResponseEntity<Object> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error) {
 		
 		if(error.hasErrors()) {
+			System.out.println(error.getAllErrors());
 			return new ResponseEntity<>(error.getFieldErrors(), HttpStatus.BAD_REQUEST);
 		}
 		

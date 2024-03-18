@@ -45,6 +45,10 @@ public class UserServiceImpl implements IUserService {
 		
 		UserResponseDTO userResponseDTO = new UserResponseDTO(); 
 		
+		userResponseDTO.setFirstName(newUser.getFirstName());
+		userResponseDTO.setLastName(newUser.getLastName());
+		userResponseDTO.setEmail(newUser.getEmail());
+		
 		return Optional.of(userResponseDTO);
 	}
 
