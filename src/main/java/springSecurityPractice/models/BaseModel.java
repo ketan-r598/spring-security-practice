@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @EntityListeners(AuditingEntityListener.class)
 public class BaseModel {
 	
-	@Column(nullable = false, updatable = false)
+	@Column(updatable = false)
 	@CreatedDate
 	private Date createdAt;
 	
