@@ -25,19 +25,21 @@ public class UserRegistrationController {
 	private IUserService userService;
 	
 	@PostMapping("/register")
-	public ResponseEntity<Object> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error) {
+	public ResponseEntity<?> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error) {
 		
 		if(error.hasErrors()) {
 			System.out.println(error.getAllErrors());
-			return new ResponseEntity<>(error.getFieldErrors(), HttpStatus.BAD_REQUEST);
+//			System.out.println(error.getFieldError());
+//			Multimap<String, String> errorMap = null;
+			return new ResponseEntity<UserResponseDTO>(null,null, HttpStatus.BAD_REQUEST);
 		}
 		
 		Optional<UserResponseDTO> userResponseDTO;
 		try {
 			userResponseDTO = userService.saveUser(userRequestDTO);
 		} catch(UserAlreadyExistException ex) {
-			return new ResponseEntity<>(ex.getMessage(),HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
-		return new ResponseEntity<>(userResponseDTO, HttpStatus.CREATED);
+		return new ResponseEntity<UserResponseDTO>(userResponseDTO.get(), HttpStatus.CREATED);
 	}
 }
