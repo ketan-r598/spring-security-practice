@@ -25,6 +25,7 @@ import springSecurityPractice.events.OnRegistrationCompleteEvent;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
 import springSecurityPractice.models.User;
 import springSecurityPractice.models.VerificationToken;
+import springSecurityPractice.repositories.VerificationTokenRepository;
 import springSecurityPractice.services.IUserService;
 
 @RestController
@@ -36,6 +37,9 @@ public class UserRegistrationController {
 	
 	@Autowired
 	private ApplicationEventPublisher eventPublisher;
+	
+	@Autowired
+	private VerificationTokenRepository tokenRepo;
 	
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error, HttpServletRequest request) {
@@ -52,8 +56,9 @@ public class UserRegistrationController {
 			userResponseDTO = userService.saveUser(userRequestDTO);
 			if(userResponseDTO.isPresent()) {
 				User _user = userService.getUserUser(userResponseDTO.get().getEmail());
+				System.out.println(_user);
 				eventPublisher.publishEvent(new OnRegistrationCompleteEvent(_user, request.getLocale(), request.getContextPath()));
-				
+				System.out.println("\nAfter the event publisher\n");
 			} else {
 				// TODO::
 			}
@@ -61,8 +66,10 @@ public class UserRegistrationController {
 		} catch(UserAlreadyExistException ex) {
 			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		} catch(RuntimeException ex) {
+			System.out.println(ex);
 			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
+		
 		return new ResponseEntity<UserResponseDTO>(userResponseDTO.get(), HttpStatus.CREATED);
 	}
 	
@@ -72,7 +79,7 @@ public class UserRegistrationController {
 		Locale locale = request.getLocale();
 		VerificationToken verificationToken = userService.getVerificationToken(token);
 		
-		if(verificationToken == null) {
+		if(verificationToken == null || verificationToken.isValid() == false) {
 			return new ResponseEntity<String>("Invalid Token", HttpStatus.UNAUTHORIZED);
 		}
 		
@@ -85,8 +92,10 @@ public class UserRegistrationController {
 		}
 		
 		user.setEnabled(true);
-		userService.saveRegisteredUser(user);
+		verificationToken.setValid(false);
 		
+		userService.saveRegisteredUser(user);
+		tokenRepo.save(verificationToken);
 		return new ResponseEntity<String>("Token Verified and Account is activated",HttpStatus.ACCEPTED);
 	}
 }
