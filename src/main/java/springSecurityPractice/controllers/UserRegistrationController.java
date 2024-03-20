@@ -3,6 +3,7 @@ package springSecurityPractice.controllers;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import springSecurityPractice.dtos.UserRequestDTO;
 import springSecurityPractice.dtos.UserResponseDTO;
+import springSecurityPractice.events.OnRegistrationCompleteEvent;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
 import springSecurityPractice.services.IUserService;
 
@@ -24,8 +27,11 @@ public class UserRegistrationController {
 	@Autowired
 	private IUserService userService;
 	
+	@Autowired
+	private ApplicationEventPublisher eventPublisher;
+	
 	@PostMapping("/register")
-	public ResponseEntity<?> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error) {
+	public ResponseEntity<?> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error, HttpServletRequest request) {
 		
 		if(error.hasErrors()) {
 			System.out.println(error.getAllErrors());
@@ -37,9 +43,75 @@ public class UserRegistrationController {
 		Optional<UserResponseDTO> userResponseDTO;
 		try {
 			userResponseDTO = userService.saveUser(userRequestDTO);
+			if(userResponseDTO.isPresent()) {
+				eventPublisher.publishEvent(new OnRegistrationCompleteEvent(userResponseDTO.get(), request.getLocale(), request.getContextPath()));
+				
+			} else {
+				// TODO::
+			}
+			
 		} catch(UserAlreadyExistException ex) {
+			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+		} catch(RuntimeException ex) {
 			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity<UserResponseDTO>(userResponseDTO.get(), HttpStatus.CREATED);
 	}
 }
+
+
+//System.out.println("\n");
+//
+//System.out.println("Servlet Context = "+ request.getServletContext());
+//System.out.println("Auth Type = " + request.getAuthType());
+//
+//System.out.println("Local Addr = " + request.getLocalAddr());
+//System.out.println("Local Name = " + request.getLocalName());
+//System.out.println("Local Port" + request.getLocalPort());
+//
+//System.out.println("Protocol = "+ request.getProtocol());
+//System.out.println("Protocol Request Id = " + request.getProtocolRequestId());
+//
+//System.out.println("Query String = " + request.getQueryString());
+//
+//System.out.println("Remote Addr = " + request.getRemoteAddr());
+//System.out.println("Remote Host = " + request.getRemoteHost());
+//System.out.println("Remote Port = " + request.getRemotePort());
+//System.out.println("Remote User = " + request.getRemoteUser());
+//
+//System.out.println("Requested Seesion Id = " + request.getRequestedSessionId());
+//System.out.println("Request Id = " + request.getRequestId());
+//System.out.println("Request URI = " + request.getRequestURI());
+//
+//System.out.println("Server Name = " + request.getServerName());
+//System.out.println("Server Port = " + request.getServerPort());
+//System.out.println("Servlet Path = " + request.getServletPath());
+//
+//System.out.println("Request URL = " + request.getRequestURL());
+//
+//System.out.println("Cookies = " + request.getCookies().toString());
+//System.out.println("Header Names = " + request.getHeaderNames());
+//
+//System.out.println("HttpServletMapping = " + request.getHttpServletMapping());
+//
+//System.out.println("Locale = " + request.getLocale());
+//System.out.println("Locales = ");
+//
+//Iterator<Locale> itr = request.getLocales().asIterator();
+//
+//while(itr.hasNext()) {
+//	System.out.println();
+//	System.out.println(itr.next());
+//}
+//
+//System.out.println("ParameterMap = " + request.getParameterMap());
+//System.out.println("Parameter Names = " + request.getParameterNames());
+//
+//System.out.println("Servlet Connection = " + request.getServletConnection());
+//
+//System.out.println("Servlet Context = " + request.getServletContext());
+//System.out.println("Session = " + request.getSession().toString());
+//System.out.println("Trailer Feilds = " + request.getTrailerFields());
+//System.out.println("User Principal = " + request.getUserPrincipal());
+//
+//System.out.println("\n"); 
