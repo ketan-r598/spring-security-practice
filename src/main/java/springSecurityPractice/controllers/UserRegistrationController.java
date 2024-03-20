@@ -1,5 +1,7 @@
 package springSecurityPractice.controllers;
 
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,10 +9,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -18,6 +23,8 @@ import springSecurityPractice.dtos.UserRequestDTO;
 import springSecurityPractice.dtos.UserResponseDTO;
 import springSecurityPractice.events.OnRegistrationCompleteEvent;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
+import springSecurityPractice.models.User;
+import springSecurityPractice.models.VerificationToken;
 import springSecurityPractice.services.IUserService;
 
 @RestController
@@ -44,7 +51,8 @@ public class UserRegistrationController {
 		try {
 			userResponseDTO = userService.saveUser(userRequestDTO);
 			if(userResponseDTO.isPresent()) {
-				eventPublisher.publishEvent(new OnRegistrationCompleteEvent(userResponseDTO.get(), request.getLocale(), request.getContextPath()));
+				User _user = userService.getUserUser(userResponseDTO.get().getEmail());
+				eventPublisher.publishEvent(new OnRegistrationCompleteEvent(_user, request.getLocale(), request.getContextPath()));
 				
 			} else {
 				// TODO::
@@ -56,6 +64,30 @@ public class UserRegistrationController {
 			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity<UserResponseDTO>(userResponseDTO.get(), HttpStatus.CREATED);
+	}
+	
+	@GetMapping("/registrationConfirm")
+	public ResponseEntity<?> confirmRegistration(WebRequest request, @RequestParam("token") String token) {
+		
+		Locale locale = request.getLocale();
+		VerificationToken verificationToken = userService.getVerificationToken(token);
+		
+		if(verificationToken == null) {
+			return new ResponseEntity<String>("Invalid Token", HttpStatus.UNAUTHORIZED);
+		}
+		
+		User user = verificationToken.getUser();
+		
+		Calendar calendar = Calendar.getInstance();
+		
+		if((verificationToken.getExpiryDate().getTime() - calendar.getTime().getTime()) <= 0) {
+			return new ResponseEntity<String>("Token has expired", HttpStatus.BAD_REQUEST);
+		}
+		
+		user.setEnabled(true);
+		userService.saveRegisteredUser(user);
+		
+		return new ResponseEntity<String>("Token Verified and Account is activated",HttpStatus.ACCEPTED);
 	}
 }
 

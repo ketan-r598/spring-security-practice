@@ -42,4 +42,8 @@ public class VerificationToken extends BaseModel{
 		calendar.add(Calendar.MINUTE, expiryTimeInMinutes);
 		return new Date(calendar.getTime().getTime());
 	}
+	
+	public void setExpiryDate() {
+		this.expiryDate = calculateExpiryDate(EXPIRATION);
+	}
 }
