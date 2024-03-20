@@ -8,8 +8,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
-import springSecurityPractice.dtos.UserResponseDTO;
 import springSecurityPractice.events.OnRegistrationCompleteEvent;
+import springSecurityPractice.models.User;
 import springSecurityPractice.services.IUserService;
 
 public class RegistrationListener implements ApplicationListener<OnRegistrationCompleteEvent> {
@@ -29,10 +29,10 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
 	}
 	
 	private void confirmRegistration(OnRegistrationCompleteEvent event) {
-		UserResponseDTO user = event.getUser();
+		User user = event.getUser();
 		String token = UUID.randomUUID().toString();
 		
-//		service.createVerificationToken(user,token);
+		service.createVerificationToken(user,token);
 		
 		String recipientAddress = user.getEmail();
 		String subject = "Registration Confirmation";
