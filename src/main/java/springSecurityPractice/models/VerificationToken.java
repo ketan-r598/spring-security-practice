@@ -13,10 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "tokens")
 public class VerificationToken extends BaseModel{
@@ -35,11 +33,20 @@ public class VerificationToken extends BaseModel{
 	
 	private Date expiryDate;
 	
-	@SuppressWarnings("unused")
+	private boolean isValid;
+	
 	private Date calculateExpiryDate(int expiryTimeInMinutes) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(new Timestamp(calendar.getTime().getTime()));
 		calendar.add(Calendar.MINUTE, expiryTimeInMinutes);
 		return new Date(calendar.getTime().getTime());
+	}
+	
+	public void setExpiryDate() {
+		this.expiryDate = calculateExpiryDate(EXPIRATION);
+	}
+	
+	public VerificationToken() {
+		this.isValid = true;
 	}
 }
