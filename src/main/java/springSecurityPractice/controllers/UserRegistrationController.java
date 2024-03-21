@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +20,17 @@ import org.springframework.web.context.request.WebRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import springSecurityPractice.dtos.PasswordResetDTO;
+import springSecurityPractice.dtos.PasswordResetRequestDTO;
 import springSecurityPractice.dtos.UserRequestDTO;
 import springSecurityPractice.dtos.UserResponseDTO;
+import springSecurityPractice.events.OnPasswordResetRequestEvent;
 import springSecurityPractice.events.OnRegistrationCompleteEvent;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
+import springSecurityPractice.models.PasswordResetToken;
 import springSecurityPractice.models.User;
 import springSecurityPractice.models.VerificationToken;
+import springSecurityPractice.repositories.PasswordResetTokenRepository;
 import springSecurityPractice.repositories.VerificationTokenRepository;
 import springSecurityPractice.services.IUserService;
 
@@ -40,6 +46,12 @@ public class UserRegistrationController {
 	
 	@Autowired
 	private VerificationTokenRepository tokenRepo;
+	
+	@Autowired
+	private PasswordResetTokenRepository resetTokenRepo;
+	
+	@Autowired
+	private PasswordEncoder encoder;
 	
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody @Valid UserRequestDTO userRequestDTO, Errors error, HttpServletRequest request) {
@@ -98,6 +110,47 @@ public class UserRegistrationController {
 		tokenRepo.save(verificationToken);
 		return new ResponseEntity<String>("Token Verified and Account is activated",HttpStatus.ACCEPTED);
 	}
+	
+	@GetMapping("/resetPassword")
+	public ResponseEntity<?> resetPassword(WebRequest request, @RequestBody PasswordResetRequestDTO passwordResetRequestDTO) {
+		
+		User user = userService.getUserUser(passwordResetRequestDTO.getEmail());
+		
+		if(user != null) {
+			eventPublisher.publishEvent(new OnPasswordResetRequestEvent(user, request.getContextPath()));
+			return new ResponseEntity<String>("Check the mail for the link to reset",null,HttpStatus.OK);
+		} else {
+			// TODO ::
+			return new ResponseEntity<String>("User Not Found",null,HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	@PostMapping("/passwordReset")
+	public ResponseEntity<?> changePassword(@RequestParam("token") String token, @RequestBody PasswordResetDTO passwordResetDTO) {
+		
+		PasswordResetToken passwordResetToken = userService.getPasswordResetToken(token);
+		
+		
+		
+		if((passwordResetToken == null ||passwordResetToken.getExpiryDate().getTime() - Calendar.getInstance().getTime().getTime() <= 0) || passwordResetToken.isValid() == false) {
+			return new ResponseEntity<String>("Token expired or invalid", null, HttpStatus.BAD_REQUEST);
+		}
+		
+		User user = passwordResetToken.getUser();
+		
+		if(user == null) {
+			return new ResponseEntity<String>("Token expired or invalid", null, HttpStatus.BAD_REQUEST);
+		}
+		
+		user.setPassword(encoder.encode(passwordResetDTO.getNewPassword()));
+		passwordResetToken.setValid(false);
+		
+		userService.saveRegisteredUser(user);
+		resetTokenRepo.save(passwordResetToken);
+		
+		return new ResponseEntity<String>("Request Completed !!!",null,HttpStatus.ACCEPTED);
+	}
+	
 }
 
 
