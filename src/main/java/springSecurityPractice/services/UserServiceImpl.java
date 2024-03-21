@@ -12,8 +12,10 @@ import springSecurityPractice.dtos.UserRequestDTO;
 import springSecurityPractice.dtos.UserResponseDTO;
 import springSecurityPractice.exceptions.UserAlreadyExistException;
 import springSecurityPractice.exceptions.UserNotFoundException;
+import springSecurityPractice.models.PasswordResetToken;
 import springSecurityPractice.models.User;
 import springSecurityPractice.models.VerificationToken;
+import springSecurityPractice.repositories.PasswordResetTokenRepository;
 import springSecurityPractice.repositories.UserRepository;
 import springSecurityPractice.repositories.VerificationTokenRepository;
 
@@ -30,6 +32,9 @@ public class UserServiceImpl implements IUserService {
 	
 	@Autowired
 	private VerificationTokenRepository tokenRepository;
+	
+	@Autowired
+	private PasswordResetTokenRepository resetTokenReposiotry;
 	
 	@Override
 	public Optional<UserResponseDTO> saveUser(UserRequestDTO userRequestDTO) throws UserAlreadyExistException {
@@ -103,5 +108,22 @@ public class UserServiceImpl implements IUserService {
 	public User getUserUser(String email) {
 		// TODO Auto-generated method stub
 		return userRepository.findByEmail(email).get();
+	}
+
+	@Override
+	public void createPasswordResetToken(User user, String token) {
+		
+		PasswordResetToken passwordResetToken = new PasswordResetToken();
+		
+		passwordResetToken.setToken(token);
+		passwordResetToken.setUser(user);
+		passwordResetToken.setExpiryDate();
+		
+		resetTokenReposiotry.save(passwordResetToken);
+	}
+
+	@Override
+	public PasswordResetToken getPasswordResetToken(String passwordResetToken) {
+		return resetTokenReposiotry.findByToken(passwordResetToken);
 	}
 }
